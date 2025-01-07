@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 import configargparse
 
@@ -20,6 +21,8 @@ class MyProgramArgs:
     num_workers: int
     epochs_until_checkpoint: int
     epochs_until_summary: int
+    balance_dataset: bool
+    sample_counts_per_class: List[int]
     save_checkpoint_filename: str
     load_checkpoint_filename: str
 
@@ -80,6 +83,19 @@ parser.add_argument(
     type=int,
     default=200,
     help="Number of epochs until tensorboard summary is saved. default=1,000",
+)
+parser.add_argument(
+    "--balance_dataset",
+    type=bool,
+    default=False,
+    help="If imbalance datasets should be balanced before training. default=False",
+)
+parser.add_argument(
+    "--sample_counts_per_class",
+    type=List[int],
+    default=[],
+    help="List of class sample counts for each class in the dataset. Used for"
+    "balancing in imbalanced datasets. default=[]",
 )
 parser.add_argument(
     "--save_checkpoint_filename",

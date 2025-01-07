@@ -7,13 +7,11 @@ from torch.utils.data.dataloader import DataLoader
 from src.augmentation import TransformType
 from src.balance_datasets import handle_imbalanced_data
 from src.dataset import DunesDataset
+from src.hyperparameters import args
 
 TRAIN_PROPORTION = 0.8
 VALID_PROPORTION = 0.1
 TEST_PROPORTION = 1 - TRAIN_PROPORTION - VALID_PROPORTION
-
-BALANCE_DATASET = False
-CLASS_SAMPLE_COUNTS_FROM_ORIGINAL_DATASET = [1340, 3820, 1500, 3730, 3838, 1760]
 
 TrainDataset = Dataset
 ValidDataset = Dataset
@@ -67,8 +65,8 @@ def get_dataloaders(
     batch_size: int,
     transform_train: TransformType,
     transform_valid: TransformType,
-    balance_dataset: bool = BALANCE_DATASET,
-    class_sample_counts: list = CLASS_SAMPLE_COUNTS_FROM_ORIGINAL_DATASET,
+    balance_dataset: bool = args.balance_dataset,
+    class_sample_counts: list = args.sample_counts_per_class,
 ) -> Tuple[TrainDataLoader, ValidDataLoader]:
     train_set, valid_set = get_datasets(
         path_to_dataset=path_to_dataset,
