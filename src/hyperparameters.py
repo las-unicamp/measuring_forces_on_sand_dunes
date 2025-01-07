@@ -106,9 +106,9 @@ parser.add_argument(
 parser.add_argument(
     "--load_checkpoint_filename",
     type=str,
-    default="checkpoint.tar",
+    default=None,
     help="Name of the checkpoint file to continue training from a given point"
-    "or make inference. default=checkpoint.tar",
+    "or make inference. default=None",
 )
 
 args = MyProgramArgs(**vars(parser.parse_args()))
