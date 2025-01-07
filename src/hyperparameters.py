@@ -20,8 +20,8 @@ class MyProgramArgs:
     num_workers: int
     epochs_until_checkpoint: int
     epochs_until_summary: int
-    checkpoint_file_name: str
-    load_checkpoint: bool
+    save_checkpoint_filename: str
+    load_checkpoint_filename: str
 
 
 parser = configargparse.ArgumentParser()
@@ -82,18 +82,17 @@ parser.add_argument(
     help="Number of epochs until tensorboard summary is saved. default=1,000",
 )
 parser.add_argument(
-    "--load_checkpoint",
+    "--save_checkpoint_filename",
     type=str,
-    default=None,
-    help="Name of the checkpoint file to continue training from a given point"
-    "or make inference. default=None",
+    default="checkpoint.tar",
+    help="Name of the checkpoint file to save training default=checkpoint.tar",
 )
 parser.add_argument(
-    "--checkpoint_file_name",
+    "--load_checkpoint_filename",
     type=str,
-    default="my_checkpoint.tar",
-    help="Name of checkpoint file to continue training or make inference."
-    "default=my_checkpoint.tar",
+    default="checkpoint.tar",
+    help="Name of the checkpoint file to continue training from a given point"
+    "or make inference. default=checkpoint.tar",
 )
 
 args = MyProgramArgs(**vars(parser.parse_args()))
