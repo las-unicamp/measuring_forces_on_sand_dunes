@@ -36,11 +36,11 @@ class Runner:
     def _forward(
         self,
         inputs: torch.Tensor,
-        masks: torch.Tensor,
+        forces: torch.Tensor,
     ):
         predictions = self.model(inputs)
 
-        loss = self.loss_fn(predictions, masks)
+        loss = self.loss_fn(predictions, forces)
 
         return loss, predictions
 
@@ -54,12 +54,12 @@ class Runner:
     def _parse_image(
         self,
         inputs: torch.Tensor,
-        masks: torch.Tensor,
+        forces: torch.Tensor,
     ) -> Tuple[torch.Tensor]:
         inputs = inputs.to(device=self.device, dtype=torch.float32) / 255.0
-        masks = masks.to(device=self.device, dtype=torch.float32) / 255.0
+        forces = forces.to(device=self.device, dtype=torch.float32) / 255.0
 
-        return inputs, masks
+        return inputs, forces
 
     def infer(self, inputs: torch.Tensor) -> torch.Tensor:
         if self.model.training:
@@ -83,8 +83,8 @@ class Runner:
 
         self.set_model_mode()
 
-        for batch_index, (inputs, masks) in progress_bar:
-            inputs, masks = self._parse_image(inputs, masks)
+        for batch_index, (inputs, forces) in progress_bar:
+            inputs, forces = self._parse_image(inputs, forces)
 
             if self.optimizer:
                 with torch.autocast(
@@ -95,7 +95,7 @@ class Runner:
                     (
                         loss,
                         predictions,
-                    ) = self._forward(inputs, masks)
+                    ) = self._forward(inputs, forces)
 
                 self._backward(loss)
             else:
@@ -103,9 +103,9 @@ class Runner:
                     (
                         loss,
                         predictions,
-                    ) = self._forward(inputs, masks)
+                    ) = self._forward(inputs, forces)
 
-            accuracy = self.metric.forward(predictions, masks)
+            accuracy = self.metric.forward(predictions, forces)
 
             # Update tqdm progress bar
             progress_bar.set_description(
