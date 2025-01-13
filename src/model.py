@@ -1,6 +1,8 @@
 import torch
 from torch import nn
 
+from src.gradient_reversal_layer import GradientReversalFn
+
 
 class DoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -68,10 +70,29 @@ class DecoderBlock(nn.Module):
         return self.double_conv(x)
 
 
+class ClassifierEncoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.double_conv = DoubleConv(in_channels, out_channels)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+    def forward(self, x):
+        x = self.double_conv(x)
+        x = self.pool(x)
+        return x
+
+
 class UNet(nn.Module):
-    def __init__(self, in_channels=3, out_classes=3, up_sample_mode="conv_transpose"):
+    def __init__(
+        self,
+        in_channels=3,
+        out_classes=3,
+        up_sample_mode="conv_transpose",
+        use_uda=False,
+    ):
         super().__init__()
         self.up_sample_mode = up_sample_mode
+        self.use_uda = use_uda
 
         n_filters = [64, 128, 256, 512, 1024]
 
@@ -90,7 +111,22 @@ class UNet(nn.Module):
         # Final Convolution
         self.final_conv = nn.Conv2d(n_filters[0], out_classes, kernel_size=1)
 
-    def forward(self, x):
+        if self.use_uda:
+            # UDA using a Domain Adversarial Discriminative model
+            self.domain_classifier = nn.Sequential(
+                ClassifierEncoderBlock(n_filters[0], n_filters[0]),
+                ClassifierEncoderBlock(n_filters[0], n_filters[0]),
+                ClassifierEncoderBlock(n_filters[0], n_filters[0]),
+                ClassifierEncoderBlock(n_filters[0], n_filters[1]),
+                ClassifierEncoderBlock(n_filters[1], n_filters[1]),
+                ClassifierEncoderBlock(n_filters[1], n_filters[1]),
+                nn.Flatten(start_dim=1),
+                nn.Linear(8 * 8 * n_filters[1], 1024),
+                nn.ReLU(inplace=True),
+                nn.Linear(1024, 1),
+            )
+
+    def forward(self, x, alpha=1.0):
         x, skip1 = self.down_conv1(x)
         x, skip2 = self.down_conv2(x)
         x, skip3 = self.down_conv3(x)
@@ -100,5 +136,10 @@ class UNet(nn.Module):
         x = self.up_conv3(x, skip3)
         x = self.up_conv2(x, skip2)
         x = self.up_conv1(x, skip1)
+        if self.use_uda:
+            features_grl = GradientReversalFn.apply(x, alpha)
+            domain = self.domain_classifier(features_grl)
         x = self.final_conv(x)
+        if self.use_uda:
+            return x, domain
         return x

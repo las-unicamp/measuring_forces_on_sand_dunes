@@ -6,7 +6,7 @@ from torch.utils.data.dataloader import DataLoader
 
 from src.augmentation import TransformType
 from src.balance_datasets import handle_imbalanced_data
-from src.dataset import DunesDataset
+from src.dataset import DunesDataset, TargetDataset
 
 TRAIN_PROPORTION = 0.8
 VALID_PROPORTION = 0.1
@@ -33,10 +33,13 @@ def split_dataset(
 
 def get_datasets(
     path_to_dataset: str,
+    path_to_target_dataset: str,
     transform_train: TransformType,
     transform_valid: TransformType,
+    transform_target: TransformType,
 ) -> Tuple[TrainDataset, ValidDataset]:
     dataset = DunesDataset(csv_file=path_to_dataset)
+    target_set = TargetDataset(path=path_to_target_dataset, transform=transform_target)
 
     train_size = int(TRAIN_PROPORTION * len(dataset))
     valid_size = int(VALID_PROPORTION * len(dataset))
@@ -50,27 +53,33 @@ def get_datasets(
     print("# of training data", len(train_set))
     print("# of validation data", len(valid_set))
     print("# of test data", len(dataset) - train_size - valid_size)
+    print("# of target data", len(target_set))
 
-    return train_set, valid_set
+    return train_set, valid_set, target_set
 
 
 TrainDataLoader = DataLoader
 ValidDataLoader = DataLoader
+TargetDataLoader = DataLoader
 
 
 def get_dataloaders(
-    path_to_dataset: str,
+    path_to_source_dataset: str,
+    path_to_target_dataset: str,
     num_workers: int,
     batch_size: int,
     transform_train: TransformType,
     transform_valid: TransformType,
+    transform_target: TransformType,
     balance_dataset: bool = False,
     class_sample_counts: list = [],
 ) -> Tuple[TrainDataLoader, ValidDataLoader]:
-    train_set, valid_set = get_datasets(
-        path_to_dataset=path_to_dataset,
+    train_set, valid_set, target_set = get_datasets(
+        path_to_source_dataset=path_to_source_dataset,
+        path_to_target_dataset=path_to_target_dataset,
         transform_train=transform_train,
         transform_valid=transform_valid,
+        transform_target=transform_target,
     )
 
     # Optionally balance dataset with weights
@@ -107,4 +116,13 @@ def get_dataloaders(
         drop_last=True,
     )
 
-    return train_loader, valid_loader
+    target_loader = DataLoader(
+        target_set,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+        drop_last=True,
+    )
+
+    return train_loader, valid_loader, target_loader

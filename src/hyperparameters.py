@@ -14,7 +14,8 @@ class MyProgramArgs:
     config_filepath: any
     logging_root: str
     experiment_name: str
-    path_to_dataset: str
+    path_to_source_dataset: str
+    path_to_target_dataset: str
     learning_rate: float
     num_epochs: int
     batch_size: int
@@ -46,9 +47,16 @@ parser.add_argument(
     "will be saved.",
 )
 parser.add_argument(
-    "--path_to_dataset",
+    "--path_to_source_dataset",
     type=str,
-    help="Path to the dataset directory, where images are stored",
+    help="Path to the dataset directory, where images from the source domain"
+    "(dunes + forces) are stored",
+)
+parser.add_argument(
+    "--path_to_target_dataset",
+    type=str,
+    help="Path to the dataset directory, where images from the target domain"
+    "(i.e., experimental images) are stored",
 )
 
 

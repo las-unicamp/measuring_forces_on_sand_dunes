@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import pandas as pd
 from torch.utils.data import Dataset
@@ -34,3 +36,40 @@ class DunesDataset(Dataset):
         output_img = cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB)
 
         return input_img, output_img
+
+
+class TargetDataset(Dataset):
+    """
+    Args:
+        path (string): Path to folder containing all images from target
+            distribution
+        transform (callable, optional): Optional transform to be applied
+            on a sample
+    """
+
+    def __init__(self, path, transform=None):
+        included_extensions = ["jpg", "jpeg", "png"]
+
+        self.files = sorted(
+            [
+                os.path.join(dirpath, filename)
+                for dirpath, _, filenames in os.walk(path)
+                for filename in filenames
+                if any(filename.endswith(ext) for ext in included_extensions)
+            ]
+        )
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, index: int):
+        input_img_path = self.files[index]
+        input_img = cv2.imread(input_img_path)
+        input_img = cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB)
+
+        if self.transform:
+            augmentation = self.transform(image=input_img)
+            input_img = augmentation["image"]
+
+        return input_img

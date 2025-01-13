@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from src.augmentation import TRAIN_TRANSFORM
+from src.augmentation import TARGET_TRANSFORM, TRAIN_TRANSFORM
 from src.checkpoint import load_checkpoint, save_checkpoint
 from src.early_stopping import EarlyStopping
 from src.hyperparameters import args
@@ -24,12 +24,14 @@ print(torch.version.cuda)
 def main():
     model = UNet()
 
-    train_loader, valid_loader = get_dataloaders(
-        path_to_dataset=args.path_to_dataset,
+    train_loader, valid_loader, target_loader = get_dataloaders(
+        path_to_source_dataset=args.path_to_source_dataset,
+        path_to_target_dataset=args.path_to_target_dataset,
         num_workers=args.num_workers,
         batch_size=args.batch_size,
         transform_train=TRAIN_TRANSFORM,
         transform_valid=TRAIN_TRANSFORM,
+        transform_target=TARGET_TRANSFORM,
     )
 
     optimizer = torch.optim.NAdam(model.parameters(), lr=args.learning_rate)
@@ -38,8 +40,20 @@ def main():
         optimizer, patience=13, factor=0.6, verbose=True
     )
 
-    train_runner = Runner(args.num_epochs, train_loader, model, optimizer=optimizer)
-    valid_runner = Runner(args.num_epochs, valid_loader, model)
+    # using UDA:
+    train_runner = Runner(
+        args.num_epochs,
+        train_loader,
+        model,
+        optimizer=optimizer,
+        target_loader=target_loader,  # Comment out this line to disable UDA
+    )
+    valid_runner = Runner(
+        args.num_epochs,
+        valid_loader,
+        model,
+        target_loader=target_loader,  # Comment out this line to disable UDA
+    )
 
     tracker = TensorboardTracker(log_dir=args.logging_root)
 

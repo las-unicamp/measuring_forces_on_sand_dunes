@@ -9,7 +9,7 @@ from src.hyperparameters import args
 
 def visualize_augmentation():
     simulation_dataset = DunesDataset(
-        csv_file=args.path_to_dataset, transform=TRAIN_TRANSFORM
+        csv_file=args.path_to_source_dataset, transform=TRAIN_TRANSFORM
     )
 
     simulation_sampler = RandomSampler(
