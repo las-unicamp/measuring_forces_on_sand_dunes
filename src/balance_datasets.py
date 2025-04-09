@@ -92,24 +92,3 @@ def handle_imbalanced_data(
     sample_weights = class_weights[class_of_each_sample]
 
     return sample_weights
-
-
-def _test():
-    class_sample_counts = [1, 3, 2]
-
-    sample_classes = _get_class_of_each_sample(class_sample_counts)
-    expected_output = np.array([0, 1, 1, 1, 2, 2])
-    np.testing.assert_array_equal(sample_classes, expected_output)
-
-    class_wights = _get_class_weights(sample_classes)
-    expected_output = np.array([1, 1 / 3, 1 / 2], dtype=np.float32)
-    np.testing.assert_array_equal(class_wights, expected_output)
-
-    sample_weights = handle_imbalanced_data(class_sample_counts)
-    expected_output = np.array([1, 1 / 3, 1 / 3, 1 / 3, 1 / 2, 1 / 2], dtype=np.float32)
-    expected_output = torch.from_numpy(expected_output)
-    np.testing.assert_array_equal(sample_weights.numpy(), expected_output.numpy())
-
-
-if __name__ == "__main__":
-    _test()

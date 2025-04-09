@@ -11,7 +11,6 @@ class MyProgramArgs:
     All possible arguments must be declared in this dataclass.
     """
 
-    config_filepath: any
     logging_root: str
     experiment_name: str
     path_to_source_dataset: str
@@ -29,13 +28,6 @@ class MyProgramArgs:
 
 
 parser = configargparse.ArgumentParser()
-parser.add(
-    "-c",
-    "--config_filepath",
-    required=False,
-    is_config_file=True,
-    help="Path to config file.",
-)
 parser.add_argument(
     "--logging_root", type=str, default="./logs", help="Root for logging"
 )
@@ -55,6 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "--path_to_target_dataset",
     type=str,
+    default=None,
     help="Path to the dataset directory, where images from the target domain"
     "(i.e., experimental images) are stored",
 )
@@ -67,7 +60,7 @@ parser.add_argument(
 parser.add_argument(
     "--num_epochs",
     type=int,
-    default=10_000,
+    default=1_000,
     help="Number of epochs to train for. default=10,000",
 )
 parser.add_argument(
@@ -100,7 +93,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--sample_counts_per_class",
-    type=List[int],
+    type=lambda s: [int(item) for item in s.split(",")],
     default=[],
     help="List of class sample counts for each class in the dataset. Used for"
     "balancing in imbalanced datasets. default=[]",
