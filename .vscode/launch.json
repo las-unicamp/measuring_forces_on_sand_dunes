@@ -1,0 +1,78 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.1.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceRoot}"
+            },
+            "args": [
+                // logger parameters
+                "--experiment_name=dataset1_no_uda",
+                //
+                // input parameters
+                "--path_to_source_dataset=dataset1.csv",
+                "--path_to_target_dataset=/home/miotto/Desktop/CNN_PyTorch_dunas_novo/datasets/experiments/all",
+                //
+                // training parameters
+                "--learning_rate=3e-5",
+                "--num_epochs=300",
+                "--batch_size=3",
+                "--num_workers=3",
+                "--balance_dataset=True",
+                "--sample_counts_per_class=3820,3730,1760",
+                //
+                // checkpoint parameters
+                "--epochs_until_checkpoint=10",
+                "--epochs_until_summary=10",
+                "--save_checkpoint_filename=checkpoint.tar"
+            ],
+            "purpose": [
+                "debug-in-terminal"
+            ]
+        },
+        {
+            "name": "Debug Pytest: Current Test File",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}" // Adjust if your PYTHONPATH is different
+            },
+            "args": [
+                "-s",
+                "${file}" // Runs the currently open test file
+            ],
+            "purpose": [
+                "debug-in-terminal"
+            ]
+        },
+        {
+            "name": "Debug Pytest: Specific Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}" // Adjust if your PYTHONPATH is different
+            },
+            "args": [
+                "tests/test_integration.py::test_tgv_laplacian_integration_finite_diff" // Replace with specific test path
+            ],
+            "purpose": [
+                "debug-in-terminal"
+            ]
+        }
+    ]
+}
