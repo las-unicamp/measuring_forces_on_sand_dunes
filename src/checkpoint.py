@@ -28,12 +28,13 @@ def save_checkpoint(
 
 
 def load_checkpoint(
-    device: torch.device,
     model: torch.nn.Module,
     filename: str,
     optimizer: Optional[Optimizer] = None,
 ):
-    print("=> Loading checkpoint")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print(f"=> Loading checkpoint on {device}")
 
     checkpoint = torch.load(filename, map_location=device, weights_only=True)
     model.load_state_dict(checkpoint["model_state_dict"])

@@ -61,10 +61,6 @@ def main():
 
     tracker = TensorboardTracker(log_dir=args.logging_root)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    print(f"Running on {device}")
-
     best_acc = np.inf
 
     if args.load_checkpoint_filename:
@@ -72,7 +68,7 @@ def main():
             epoch_from_previous_run,
             _,
             best_acc,
-        ) = load_checkpoint(model=model, optimizer=optimizer, device=device)
+        ) = load_checkpoint(model=model, optimizer=optimizer)
 
         train_runner.epoch = epoch_from_previous_run
         valid_runner.epoch = epoch_from_previous_run

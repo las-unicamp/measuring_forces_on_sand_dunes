@@ -114,7 +114,6 @@ def test_load_checkpoint(
 
     # Now test loading the checkpoint
     loaded_epoch, loaded_prev_lr, loaded_loss, loaded_rre = load_checkpoint(
-        device="cpu",
         model=mock_model,
         filename=checkpoint_filename,
         optimizer=mock_optimizer,
@@ -149,7 +148,6 @@ def test_load_checkpoint_with_default_values(
 
     # Load checkpoint and check defaults
     loaded_epoch, loaded_prev_lr, loaded_loss, loaded_rre = load_checkpoint(
-        device="cpu",
         model=mock_model,
         filename=checkpoint_filename,
         optimizer=mock_optimizer,
