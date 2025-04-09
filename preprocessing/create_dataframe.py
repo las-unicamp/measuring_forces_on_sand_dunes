@@ -23,7 +23,10 @@ from typing import List, Tuple
 
 import pandas as pd
 
-DATASET_BASE_DIRECTORY = "./datasets/simulation"
+# DATASET_BASE_DIRECTORY = "./datasets/simulation"
+DATASET_BASE_DIRECTORY = (
+    "/home/miotto/Desktop/CNN_PyTorch_dunas_novo/datasets/simulation"
+)
 
 
 def search_for_files(path: str, pattern: str = "*") -> List[str]:
