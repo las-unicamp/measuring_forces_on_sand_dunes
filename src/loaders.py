@@ -14,48 +14,35 @@ TEST_PROPORTION = 1 - TRAIN_PROPORTION - VALID_PROPORTION
 
 TrainDataset = Dataset
 ValidDataset = Dataset
-
-
-def split_dataset(
-    dataset: Dataset, train_size: int, valid_size: int
-) -> Tuple[Dataset, Dataset]:
-    """Split dataset into training and validation sets."""
-    indices = torch.randperm(len(dataset), generator=torch.Generator().manual_seed(42))
-
-    indices_train = indices[:train_size].tolist()
-    indices_valid = indices[train_size : train_size + valid_size].tolist()
-
-    train_set = torch.utils.data.Subset(dataset, indices_train)
-    valid_set = torch.utils.data.Subset(dataset, indices_valid)
-
-    return train_set, valid_set
+TestDataset = Dataset
 
 
 def get_datasets(
-    path_to_dataset: str,
+    path_to_source_dataset: str,
     path_to_target_dataset: str,
-    transform_train: TransformType,
-    transform_valid: TransformType,
+    transform_source: TransformType,
     transform_target: TransformType,
-) -> Tuple[TrainDataset, ValidDataset]:
-    dataset = DunesDataset(csv_file=path_to_dataset)
+) -> Tuple[TrainDataset, ValidDataset, TestDataset, TargetDataset]:
+    dataset = DunesDataset(csv_file=path_to_source_dataset, transform=transform_source)
+
     target_set = TargetDataset(path=path_to_target_dataset, transform=transform_target)
 
     train_size = int(TRAIN_PROPORTION * len(dataset))
     valid_size = int(VALID_PROPORTION * len(dataset))
+    test_size = len(dataset) - train_size - valid_size
 
-    train_set, valid_set = split_dataset(dataset, train_size, valid_size)
+    train_set, valid_set, test_set = torch.utils.data.random_split(
+        dataset, [train_size, valid_size, test_size]
+    )
 
-    # Apply transforms
-    train_set.transform = transform_train
-    valid_set.transform = transform_valid
+    assert len(dataset) - train_size - valid_size == len(test_set)
 
     print("# of training data", len(train_set))
     print("# of validation data", len(valid_set))
     print("# of test data", len(dataset) - train_size - valid_size)
     print("# of target data", len(target_set))
 
-    return train_set, valid_set, target_set
+    return train_set, valid_set, test_set, target_set
 
 
 TrainDataLoader = DataLoader
@@ -68,19 +55,19 @@ def get_dataloaders(
     path_to_target_dataset: str,
     num_workers: int,
     batch_size: int,
-    transform_train: TransformType,
-    transform_valid: TransformType,
+    transform_source: TransformType,
     transform_target: TransformType,
     balance_dataset: bool = False,
     class_sample_counts: list = [],
-) -> Tuple[TrainDataLoader, ValidDataLoader]:
-    train_set, valid_set, target_set = get_datasets(
+) -> Tuple[TrainDataLoader, ValidDataLoader, TargetDataLoader | None]:
+    train_set, valid_set, test_set, target_set = get_datasets(
         path_to_source_dataset=path_to_source_dataset,
         path_to_target_dataset=path_to_target_dataset,
-        transform_train=transform_train,
-        transform_valid=transform_valid,
+        transform_source=transform_source,
         transform_target=transform_target,
     )
+
+    balance_dataset = bool(class_sample_counts)
 
     # Optionally balance dataset with weights
     if balance_dataset:
@@ -116,13 +103,16 @@ def get_dataloaders(
         drop_last=True,
     )
 
-    target_loader = DataLoader(
-        target_set,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=num_workers,
-        pin_memory=True,
-        drop_last=True,
-    )
+    if len(target_set) > 0:
+        target_loader = DataLoader(
+            target_set,
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=num_workers,
+            pin_memory=True,
+            drop_last=True,
+        )
+    else:
+        target_loader = None
 
     return train_loader, valid_loader, target_loader

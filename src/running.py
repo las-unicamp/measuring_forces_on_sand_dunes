@@ -28,9 +28,6 @@ class Runner:
         self.loss_fn_domain_classifier = torch.nn.BCEWithLogitsLoss()
         self.metric = MeanSquaredError()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.dtype_autocast = (
-            torch.bfloat16 if self.device.type == "cpu" else torch.float16
-        )
         self.use_uda = target_loader is not None
 
         # Send to device
@@ -125,17 +122,14 @@ class Runner:
                 inputs_target, _ = self._parse_image(inputs_target, None)
 
             if self.optimizer:  # Training mode
-                with torch.autocast(
-                    device_type=self.device.type, dtype=self.dtype_autocast
-                ):
-                    loss_predictions, loss_domain_source, predictions = self._forward(
-                        inputs_source, forces_source, alpha, domain="source"
-                    )
+                loss_predictions, loss_domain_source, predictions = self._forward(
+                    inputs_source, forces_source, alpha, domain="source"
+                )
 
-                    if self.use_uda:
-                        loss_domain_target = self._forward(
-                            inputs_target, None, alpha, domain="target"
-                        )
+                if self.use_uda:
+                    loss_domain_target = self._forward(
+                        inputs_target, None, alpha, domain="target"
+                    )
                 loss = loss_predictions + loss_domain_source + loss_domain_target
 
             else:  # Validation/inference mode

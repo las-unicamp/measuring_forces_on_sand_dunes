@@ -24,35 +24,39 @@ print(torch.version.cuda)
 def main():
     model = UNet()
 
+    # Balance dataset
+    class_sample_counts = args.sample_counts_per_class  # comment this line to disable
+
     train_loader, valid_loader, target_loader = get_dataloaders(
         path_to_source_dataset=args.path_to_source_dataset,
         path_to_target_dataset=args.path_to_target_dataset,
         num_workers=args.num_workers,
         batch_size=args.batch_size,
-        transform_train=TRAIN_TRANSFORM,
-        transform_valid=TRAIN_TRANSFORM,
+        transform_source=TRAIN_TRANSFORM,
         transform_target=TARGET_TRANSFORM,
+        class_sample_counts=class_sample_counts,
     )
 
-    optimizer = torch.optim.NAdam(model.parameters(), lr=args.learning_rate)
+    optimizer = torch.optim.NAdam(
+        model.parameters(), lr=args.learning_rate, weight_decay=1e-4
+    )
     early_stopping = EarlyStopping(patience=40)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, patience=13, factor=0.6, verbose=True
     )
 
-    # using UDA:
     train_runner = Runner(
         args.num_epochs,
         train_loader,
         model,
         optimizer=optimizer,
-        target_loader=target_loader,  # Comment out this line to disable UDA
+        target_loader=target_loader,
     )
     valid_runner = Runner(
         args.num_epochs,
         valid_loader,
         model,
-        target_loader=target_loader,  # Comment out this line to disable UDA
+        target_loader=target_loader,
     )
 
     tracker = TensorboardTracker(log_dir=args.logging_root)

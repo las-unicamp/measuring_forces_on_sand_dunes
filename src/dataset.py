@@ -20,8 +20,9 @@ class DunesDataset(Dataset):
         csv_file (string): Path to the csv file with image paths
     """
 
-    def __init__(self, csv_file):
+    def __init__(self, csv_file, transform=None):
         self.files = pd.read_csv(csv_file)
+        self.transform = transform
 
     def __len__(self):
         return len(self.files)
@@ -34,6 +35,11 @@ class DunesDataset(Dataset):
         output_img_path = self.files.outputs[index]
         output_img = cv2.imread(output_img_path)
         output_img = cv2.cvtColor(output_img, cv2.COLOR_BGR2RGB)
+
+        if self.transform:
+            augmentation = self.transform(image=input_img, mask=output_img)
+            input_img = augmentation["image"]
+            output_img = augmentation["mask"]
 
         return input_img, output_img
 
