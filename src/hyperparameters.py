@@ -47,7 +47,7 @@ parser.add_argument(
 parser.add_argument(
     "--path_to_target_dataset",
     type=str,
-    default=None,
+    default="No-UDA",
     help="Path to the dataset directory, where images from the target domain"
     "(i.e., experimental images) are stored",
 )

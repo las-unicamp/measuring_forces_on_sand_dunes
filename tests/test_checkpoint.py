@@ -66,7 +66,6 @@ def test_save_checkpoint(
     epoch = 10
     prev_lr = 1e-4
     loss = 0.25
-    rre = 0.1
 
     save_checkpoint(
         mock_model,
@@ -74,7 +73,6 @@ def test_save_checkpoint(
         epoch,
         prev_lr,
         loss,
-        rre,
         filename=checkpoint_filename,
     )
 
@@ -88,7 +86,6 @@ def test_save_checkpoint(
     assert checkpoint["epoch"] == epoch
     assert checkpoint["prev_lr"] == prev_lr
     assert checkpoint["loss"] == loss
-    assert checkpoint["relative_residual_error"] == rre
 
 
 # Test loading checkpoint
@@ -99,7 +96,6 @@ def test_load_checkpoint(
     epoch = 10
     prev_lr = 1e-4
     loss = 0.25
-    rre = 0.1
 
     # Save a checkpoint first
     save_checkpoint(
@@ -108,12 +104,11 @@ def test_load_checkpoint(
         epoch,
         prev_lr,
         loss,
-        rre,
         filename=checkpoint_filename,
     )
 
     # Now test loading the checkpoint
-    loaded_epoch, loaded_prev_lr, loaded_loss, loaded_rre = load_checkpoint(
+    loaded_epoch, loaded_prev_lr, loaded_loss = load_checkpoint(
         model=mock_model,
         filename=checkpoint_filename,
         optimizer=mock_optimizer,
@@ -123,37 +118,3 @@ def test_load_checkpoint(
     assert loaded_epoch == epoch
     assert loaded_prev_lr == prev_lr
     assert loaded_loss == loss
-    assert loaded_rre == rre
-
-
-# Test loading checkpoint with default values
-def test_load_checkpoint_with_default_values(
-    mock_model: Module, mock_optimizer: Optimizer, checkpoint_filename: str
-) -> None:
-    """Test loading a checkpoint with missing default values."""
-    epoch = 10
-    prev_lr = 1e-4
-    loss = 0.25
-
-    # Save a checkpoint with missing `relative_residual_error`
-    save_checkpoint(
-        mock_model,
-        mock_optimizer,
-        epoch,
-        prev_lr,
-        loss,
-        rre=None,
-        filename=checkpoint_filename,
-    )
-
-    # Load checkpoint and check defaults
-    loaded_epoch, loaded_prev_lr, loaded_loss, loaded_rre = load_checkpoint(
-        model=mock_model,
-        filename=checkpoint_filename,
-        optimizer=mock_optimizer,
-    )
-
-    assert loaded_epoch == epoch
-    assert loaded_prev_lr == prev_lr
-    assert loaded_loss == loss
-    assert loaded_rre is None

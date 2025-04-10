@@ -7,7 +7,7 @@ from src.early_stopping import EarlyStopping
 from src.hyperparameters import args
 from src.loaders import get_dataloaders
 from src.model import UNet
-from src.running import Runner, run_epoch
+from src.running import Runner, TrainingMetrics, run_epoch
 from src.tensorboard_tracker import TensorboardTracker
 from src.time_it import time_it
 
@@ -22,8 +22,6 @@ print(torch.version.cuda)
 
 @time_it
 def main():
-    model = UNet()
-
     # Balance dataset
     class_sample_counts = args.sample_counts_per_class  # comment this line to disable
 
@@ -37,6 +35,8 @@ def main():
         class_sample_counts=class_sample_counts,
     )
 
+    model = UNet(use_uda=target_loader is not None)
+
     optimizer = torch.optim.NAdam(
         model.parameters(), lr=args.learning_rate, weight_decay=1e-4
     )
@@ -46,58 +46,93 @@ def main():
     )
 
     train_runner = Runner(
-        args.num_epochs,
-        train_loader,
         model,
-        optimizer=optimizer,
+        args.num_epochs,
+        TrainingMetrics(),
+        train_loader,
         target_loader=target_loader,
+        optimizer=optimizer,
     )
     valid_runner = Runner(
-        args.num_epochs,
-        valid_loader,
         model,
+        args.num_epochs,
+        TrainingMetrics(),
+        valid_loader,
         target_loader=target_loader,
     )
 
     tracker = TensorboardTracker(log_dir=args.logging_root)
 
-    best_acc = np.inf
+    lowest_err = np.inf
+    prev_lr = 3e-05
 
     if args.load_checkpoint_filename:
         (
             epoch_from_previous_run,
-            _,
-            best_acc,
-        ) = load_checkpoint(model=model, optimizer=optimizer)
+            prev_lr,
+            lowest_err,
+        ) = load_checkpoint(
+            model=model, filename=args.load_checkpoint_filename, optimizer=optimizer
+        )
 
         train_runner.epoch = epoch_from_previous_run
         valid_runner.epoch = epoch_from_previous_run
 
     for epoch in range(args.num_epochs):
-        epoch_loss, epoch_acc = run_epoch(
+        valid_results = run_epoch(
             train_runner=train_runner,
             valid_runner=valid_runner,
             tracker=tracker,
         )
 
-        scheduler.step(epoch_acc)
-        early_stopping(epoch_acc)
+        scheduler.step(valid_results["epoch_loss"])
+        current_lr = scheduler.get_last_lr()[0]
+        if epoch > 0 and current_lr != prev_lr:
+            print(f"Learning rate changed! New learning rate: {current_lr}")
+        prev_lr = current_lr
+
+        early_stopping(valid_results["epoch_loss"])
         if early_stopping.stop:
-            print("Ealy stopping")
+            print("Early stopping")
             break
 
         # Flush tracker after every epoch for live updates
         tracker.flush()
 
-        should_save_model = best_acc > epoch_acc
-        if should_save_model:
-            best_acc = epoch_acc
+        if should_save_model(
+            valid_runner.epoch, lowest_err, valid_results["epoch_loss"]
+        ):
+            lowest_err = valid_results["epoch_loss"]
+            filename = args.save_checkpoint_filename
             save_checkpoint(
-                valid_runner.model, optimizer, valid_runner.epoch, epoch_loss, best_acc
+                valid_runner.model,
+                optimizer,
+                valid_runner.epoch,
+                current_lr,
+                valid_results["epoch_loss"],
+                filename,
             )
-            print(f"Best acc: {epoch_acc} \t Best loss: {epoch_loss}")
+            print(
+                f"Best psnr: {valid_results['epoch_psnr']} \t \t "
+                f"Best loss: {valid_results['epoch_loss']}"
+            )
 
-        print(f"Epoch acc: {epoch_acc} \t Epoch loss: {epoch_loss}\n")
+        # progress_bar.update(1)
+        # progress_bar.set_postfix(
+        #     loss=f"{epoch_loss:.5f}",
+        #     psnr=f"{epoch_psnr:.5f}",
+        #     mae=f"{epoch_mae:.5f}",
+        # )
+
+
+def should_save_model(epoch: int, lowest_err: float, actual_err: float) -> bool:
+    if (epoch % args.epochs_until_checkpoint == 0) and (lowest_err > actual_err):
+        return True
+    return False
+
+
+def is_iteration_to_save_data(epoch: int):
+    return epoch % args.epochs_until_checkpoint == 0
 
 
 if __name__ == "__main__":
