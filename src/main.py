@@ -42,9 +42,9 @@ def main():
     optimizer = torch.optim.NAdam(
         model.parameters(), lr=args.learning_rate, weight_decay=1e-4
     )
-    early_stopping = EarlyStopping(patience=20)
+    early_stopping = EarlyStopping(patience=10)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, patience=13, factor=0.6, verbose=True
+        optimizer, patience=5, factor=0.6, verbose=True
     )
 
     train_runner = Runner(
