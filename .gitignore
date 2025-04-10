@@ -8,5 +8,9 @@ wheels/
 .ruff_cache/
 *.tar
 
+# Code-specific files
+logs/
+*.csv
+
 # Virtual environments
 .venv
