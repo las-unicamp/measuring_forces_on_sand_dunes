@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Generator
 from unittest.mock import MagicMock
 
 import pytest
@@ -53,9 +54,16 @@ def mock_optimizer(mock_model: Module) -> Optimizer:
 
 # Checkpoint file fixture
 @pytest.fixture
-def checkpoint_filename() -> str:
-    """Fixture to return a temporary checkpoint filename."""
-    return "test_checkpoint.pth.tar"
+def checkpoint_filename() -> Generator[str, None, None]:
+    """Fixture to return a temporary checkpoint filename with teardown."""
+    filename = "test_checkpoint.pth.tar"
+
+    yield filename  # Provide the filename to the test
+
+    # Teardown: Delete the file after the test
+    checkpoint_path = Path(filename)
+    if checkpoint_path.exists():
+        checkpoint_path.unlink()  # Remove the file
 
 
 # Test saving checkpoint
