@@ -20,7 +20,6 @@ class MyProgramArgs:
     batch_size: int
     num_workers: int
     epochs_until_checkpoint: int
-    epochs_until_summary: int
     balance_dataset: bool
     sample_counts_per_class: List[int]
     save_checkpoint_filename: str
@@ -46,20 +45,20 @@ parser.add_argument(
     "--experiment_name",
     type=str,
     required=True,
-    help="Name of subdirectory in logging_root where summaries and checkpoints"
+    help="Name of subdirectory in logging_root where summaries and checkpoints "
     "will be saved.",
 )
 parser.add_argument(
     "--path_to_source_dataset",
     type=str,
-    help="Full path to the location of the csv file containing the location of"
+    help="Full path to the location of the csv file containing the location of "
     "the images from the source domain (dunes + forces)",
 )
 parser.add_argument(
     "--path_to_target_dataset",
     type=str,
     default="No-UDA",
-    help="Path to the dataset directory, where images from the target domain"
+    help="Path to the dataset directory, where images from the target domain "
     "(i.e., experimental images) are stored",
 )
 
@@ -96,11 +95,20 @@ parser.add_argument(
     default=False,
     help="If imbalance datasets should be balanced before training. default=False",
 )
+
+
+def parse_sample_counts(value):
+    if isinstance(value, list):
+        return value
+    return [int(item) for item in value.split(",")]
+
+
 parser.add_argument(
     "--sample_counts_per_class",
-    type=lambda s: [int(i) for i in s.split(",")] if isinstance(s, str) else s,
+    type=int,
+    nargs="+",
     default=[],
-    help="List of class sample counts for each class in the dataset. Used for"
+    help="List of class sample counts for each class in the dataset. Used for "
     "balancing in imbalanced datasets. default=[]",
 )
 parser.add_argument(
@@ -113,8 +121,11 @@ parser.add_argument(
     "--load_checkpoint_filename",
     type=str,
     default=None,
-    help="Name of the checkpoint file to continue training from a given point"
+    help="Name of the checkpoint file to continue training from a given point "
     "or make inference. default=None",
 )
 
-args = MyProgramArgs(**vars(parser.parse_args()))
+raw_args = vars(parser.parse_args())
+raw_args.pop("config", None)
+
+args = MyProgramArgs(**raw_args)
