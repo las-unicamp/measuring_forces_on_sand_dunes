@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import torch
 
@@ -61,7 +63,10 @@ def main():
         target_loader=target_loader,
     )
 
-    tracker = TensorboardTracker(log_dir=args.logging_root)
+    tracker_subdir_name = time.strftime(f"{args.experiment_name}_run_%Y_%m_%d-%H_%M_%S")
+    tracker = TensorboardTracker(
+        filename=tracker_subdir_name, log_dir=args.logging_root
+    )
 
     lowest_err = np.inf
     prev_lr = 3e-05
