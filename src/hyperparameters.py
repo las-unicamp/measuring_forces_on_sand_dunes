@@ -27,7 +27,18 @@ class MyProgramArgs:
     load_checkpoint_filename: str
 
 
-parser = configargparse.ArgumentParser()
+parser = configargparse.ArgumentParser(
+    description="Hyperparameters and configurations to train the CNN model",
+    default_config_files=["params.yaml"],
+)
+
+parser.add_argument(
+    "-c",
+    "--config",
+    is_config_file=True,
+    help="Path to configuration file in YAML format",
+)
+
 parser.add_argument(
     "--logging_root", type=str, default="./logs", help="Root for logging"
 )
@@ -41,8 +52,8 @@ parser.add_argument(
 parser.add_argument(
     "--path_to_source_dataset",
     type=str,
-    help="Path to the dataset directory, where images from the source domain"
-    "(dunes + forces) are stored",
+    help="Full path to the location of the csv file containing the location of"
+    "the images from the source domain (dunes + forces)",
 )
 parser.add_argument(
     "--path_to_target_dataset",
@@ -61,7 +72,7 @@ parser.add_argument(
     "--num_epochs",
     type=int,
     default=1_000,
-    help="Number of epochs to train for. default=10,000",
+    help="Number of epochs to train for. default=1,000",
 )
 parser.add_argument(
     "--batch_size",
@@ -76,14 +87,8 @@ parser.add_argument(
 parser.add_argument(
     "--epochs_until_checkpoint",
     type=int,
-    default=1_000,
-    help="Number of epochs until checkpoint is saved. default=1,000",
-)
-parser.add_argument(
-    "--epochs_until_summary",
-    type=int,
-    default=200,
-    help="Number of epochs until tensorboard summary is saved. default=1,000",
+    default=10,
+    help="Number of epochs until checkpoint is saved. default=10",
 )
 parser.add_argument(
     "--balance_dataset",
@@ -93,7 +98,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--sample_counts_per_class",
-    type=lambda s: [int(item) for item in s.split(",")],
+    type=lambda s: [int(i) for i in s.split(",")] if isinstance(s, str) else s,
     default=[],
     help="List of class sample counts for each class in the dataset. Used for"
     "balancing in imbalanced datasets. default=[]",
