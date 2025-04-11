@@ -108,7 +108,7 @@ def main():
             valid_runner.epoch, lowest_err, valid_results["epoch_loss"]
         ):
             lowest_err = valid_results["epoch_loss"]
-            filename = args.save_checkpoint_filename
+            filename = f"{args.save_checkpoint_filename}_Epoch{valid_runner.epoch}.tar"
             save_checkpoint(
                 valid_runner.model,
                 optimizer,
@@ -121,13 +121,6 @@ def main():
                 f"Best psnr: {valid_results['epoch_psnr']} \t \t "
                 f"Best loss: {valid_results['epoch_loss']}"
             )
-
-        # progress_bar.update(1)
-        # progress_bar.set_postfix(
-        #     loss=f"{epoch_loss:.5f}",
-        #     psnr=f"{epoch_psnr:.5f}",
-        #     mae=f"{epoch_mae:.5f}",
-        # )
 
 
 def should_save_model(epoch: int, lowest_err: float, actual_err: float) -> bool:
